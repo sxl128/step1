@@ -28,6 +28,8 @@ public class MyController {
         }
         User user = userService.queryById(idx);
         model.addAttribute("msg",user);
+        System.out.println("hello");
+        System.out.println("this is update content");
         return "this";
 
     }

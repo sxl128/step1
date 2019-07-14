@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:aop="http://www.springframework.org/schema/aop" xmlns:tx="http://www.springframework.org/schema/tx"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+        http://www.springframework.org/schema/beans/spring-beans.xsd
+        http://www.springframework.org/schema/context
+       http://www.springframework.org/schema/context/spring-context.xsd
+        http://www.springframework.org/schema/aop
+        http://www.springframework.org/schema/aop/spring-aop.xsd http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx.xsd">
+    
+    <!--spring和mybatis整合的spring全局配置文件-->
+
+
+
+
+    <!--引入c3p0的配置信息-->
+    <context:property-placeholder location="classpath:c3p0.properties"/>
+    <!--开启spring的注解扫描-->
+    <context:annotation-config/>
+    
+    <!--配置数据源-->
+    <bean id="c3p0" class="com.mchange.v2.c3p0.ComboPooledDataSource">
+        <property name="jdbcUrl" value="${jdbc.url}"/>
+        <property name="driverClass" value="${jdbc.driver}"/>
+        <property name="password" value="${jdbc.password}"/>
+        <property name="user" value="${jdbc.username}"/>
+    </bean>
+
+    <!--开启spring的事务-->
+
+    <bean  id="transactionManager"   class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+        <property name="dataSource" ref="c3p0"/>
+    </bean>
+
+    <tx:advice id="txAdvice" transaction-manager="transactionManager">
+        <tx:attributes>
+            <tx:method name="save*"/>
+            <tx:method name="delete*"/>
+            <tx:method name="update*"/>
+        </tx:attributes>
+    </tx:advice>
+
+    <aop:config>
+        <aop:pointcut id="myCut" expression="execution(* cn.alibaba.web.service..*.*(..))"/>
+        <aop:advisor advice-ref="txAdvice" pointcut-ref="myCut"/>
+    </aop:config>
+    
+    <!--配置sqlSessionFactory-->
+    <bean class="org.mybatis.spring.SqlSessionFactoryBean">
+        
+        <!--配置数据源和mybatis的全局配置文件的位置-->
+        <property name="dataSource" ref="c3p0"/>
+        <property name="configLocation" value="classpath:mybatis/mybatis-config.xml"/>
+        
+        <!--配置mappers的扫描路径-->
+        <property name="mapperLocations" value="classpath:mybatis/mappers/**/*.xml"/>
+        <!--配置mybatis的类别名的扫描路径-->
+        <property name="typeAliasesPackage" value="cn.alibaba.web.pojo"/>
+   
+    </bean>
+
+
+
+    <!--配置spring下的mybatis的动态代理扫描-->
+    <bean class="org.mybatis.spring.mapper.MapperScannerConfigurer">
+        <!--使用包扫描的方式-->
+        <property name="basePackage" value="cn.alibaba.web.model"/>
+
+        <!--此时只有一个sqlSessionFactory，所以可以省略sqlSessionFactory的配置-->
+    </bean>
+
+    
+
+
+
+</beans>
